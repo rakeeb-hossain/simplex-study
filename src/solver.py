@@ -35,6 +35,7 @@ class SimplexSolver:
 		self.A = A
 		self.c = c
 		self.b = b
+		self.pivot_rule = pivot_rule
 
 		# define some frequently used parameters
 		indices = list(range(self.A.shape[1]))
@@ -49,6 +50,8 @@ class SimplexSolver:
 		opt_infinity = False
 		iteration_number = 0
 		obj_val = float('inf')
+		print("\n\n\n")
+                
 
 		# main simplex body
 		while not optimal:
@@ -84,6 +87,7 @@ class SimplexSolver:
 			if (np.array(list(reduced_costs.values())) >= 0.0).all():
 				# all reduced costs are >= 0.0 so this means we are at optimal already
 				optimal = True
+				print("Already optimal!")
 				break
 
 
@@ -127,7 +131,7 @@ class SimplexSolver:
 		for i in range(x.shape[0]):
 			if i in basic_indices:
 				x[i] = x_b[basic_indices.index(i)]
-		return x
+		return x, obj_val
 
 	
 	def get_initial_bfs(self):
@@ -205,12 +209,8 @@ class SimplexSolver:
 				optimal = True
 				break
 
-			# this solution is not optimal, go to a better neighbouring BFS
-			chosen_j = None
-			for j in reduced_costs.keys():
-				if reduced_costs[j] < 0.0:
-					chosen_j = j
-					break
+			# this solution is not optimal, go to a better neighbouring BFS by calling pivot rule
+			chosen_j = self.pivot_rule.computePivotIndex(reduced_costs)
 
 			d_b = -1.0 * np.dot(B_inv, A_[:, chosen_j])
 			# check if optimal is infinity

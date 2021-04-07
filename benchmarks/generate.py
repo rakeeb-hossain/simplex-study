@@ -35,7 +35,7 @@ class RandomGenerator:
 
     def genLP(self):
         """
-        Returns LP matrices c, A, b
+        Returns feasible LP matrices c, A, b
 
         """
 
@@ -45,20 +45,45 @@ class RandomGenerator:
 
         # Generate matrices in range [self.min, self.max]
         A = np.random.rand(n, m) * (self.max_val - self.min_val) +  self.min_val
-        b = np.random.rand(n, 1) * (self.max_val - self.min_val) +  self.min_val
+        x = np.random.rand(m, 1) * (self.max_val - self.min_val)
         c = np.random.rand(m, 1) * (self.max_val - self.min_val) +  self.min_val
 
         # apply sparsity to A
         sparsity_vec = np.vectorize(self.applySparsity)
-
         A = sparsity_vec(A)
-        # b = sparsity_vec(b)
-        # c = sparsity_vec(c)
+
+        # ensure A is full rank, else try generating again
+        if np.linalg.matrix_rank(A) < min(n, m):
+            return self.genLP()
 
         # apply degeneracy
 
+        # generate b from Ax
+        b = np.matmul(A,x)
+
         return c, A, b
 
+    
+    def genBoundedLP(self):
+        # Select an n and m
+        n = random.randint(self.n_range[0], self.n_range[1])
+        m = random.randint(self.m_range[0], self.m_range[1])
+
+        # pick vectors u and v with v != 0
+        u = np.random.rand(m, 1) * (self.max_val - self.min_val) +  self.min_val
+        v = np.random.rand(m, 1) * (self.max_val - self.min_val) +  self.min_val
+
+        # ensure v != 0
+        if np.count_nonzero(v==0) != 0:
+            r = random.randint(0,m-1)
+            v[r] = random.uniform(self.min_val, self.max_val)
+
+        # pick A
+        A = np.random.rand(n, m) * (self.max_val - self.min_val) +  self.min_val
+        sparsity_vec = np.vectorize(self.applySparsity)
+        A = sparsity_vec(A)
+
+        #
 
     def applySparsity(self, n):
         p = random.uniform(0,1)
