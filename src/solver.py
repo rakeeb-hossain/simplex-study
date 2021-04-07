@@ -83,7 +83,7 @@ class SimplexSolver:
 
 
 			# check if this solution is optimal
-			if (np.array(reduced_costs.values()) >= 0.0).all():
+			if (np.array(list(reduced_costs.values())) >= 0.0).all():
 				# all reduced costs are >= 0.0 so this means we are at optimal already
 				optimal = True
 				break
@@ -206,7 +206,7 @@ class SimplexSolver:
 
 
 			# check if this solution is optimal
-			if (np.array(reduced_costs.values()) >= 0.0).all():
+			if (np.array(list(reduced_costs.values())) >= 0.0).all():
 				# all reduced costs are >= 0.0 so this means we are at optimal already
 				optimal = True
 				break
