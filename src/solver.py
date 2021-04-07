@@ -297,3 +297,7 @@ class SimplexSolver:
 
 		return (B, basic_indices)
 
+		
+
+
+
