@@ -8,11 +8,9 @@ import sympy
 import itertools
 from numpy.linalg import matrix_rank
 
-
 class SimplexSolver:
 	""" This class implements simplex algorithm to solve LPs """
-
-	def solve(self, c, A, b):
+	def solve(self, c, A, b, pivot_rule):
 		"""
 		This method solves the std form LP min (c.T * x) s.t. Ax = b, x >= 0 using simplex algorithm.
 		Parameters:
@@ -89,12 +87,8 @@ class SimplexSolver:
 				break
 
 
-			# this solution is not optimal, go to a better neighbouring BFS
-			chosen_j = None
-			for j in reduced_costs.keys():
-				if reduced_costs[j] < 0.0:
-					chosen_j = j
-					break
+			# this solution is not optimal, go to a better neighbouring BFS by calling pivot rule
+			chosen_j = pivot_rule.computePivotIndex(reduced_costs)
 
 			d_b = -1.0 * np.dot(B_inv, self.A[:, chosen_j])
 			# check if optimal is infinity

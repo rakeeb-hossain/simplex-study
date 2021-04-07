@@ -6,6 +6,9 @@ Random LP generator
 import numpy as np
 import random 
 
+
+# TO-DO: Add option to ensure LP is feasible/unbounded
+
 class RandomGenerator:
     def __init__(self, n_range, m_range, min_val, max_val, sparsity=1.0, degenerate=False):
         """
