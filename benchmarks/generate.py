@@ -38,30 +38,28 @@ class RandomGenerator:
         Returns feasible LP matrices c, A, b
 
         """
+        while True:
+            # Select an n and m
+            n = random.randint(self.n_range[0], self.n_range[1])
+            m = random.randint(self.m_range[0], self.m_range[1])
 
-        # Select an n and m
-        n = random.randint(self.n_range[0], self.n_range[1])
-        m = random.randint(self.m_range[0], self.m_range[1])
+            # Generate matrices in range [self.min, self.max]
+            A = np.random.rand(n, m) * (self.max_val - self.min_val) +  self.min_val
+            x = np.random.rand(m, 1) * (self.max_val - self.min_val)
+            c = np.random.rand(m, 1) * (self.max_val - self.min_val) +  self.min_val
 
-        # Generate matrices in range [self.min, self.max]
-        A = np.random.rand(n, m) * (self.max_val - self.min_val) +  self.min_val
-        x = np.random.rand(m, 1) * (self.max_val - self.min_val)
-        c = np.random.rand(m, 1) * (self.max_val - self.min_val) +  self.min_val
+            # apply sparsity to A
+            sparsity_vec = np.vectorize(self.applySparsity)
+            A = sparsity_vec(A)
 
-        # apply sparsity to A
-        sparsity_vec = np.vectorize(self.applySparsity)
-        A = sparsity_vec(A)
+            # ensure A is full rank, else try generating again
+            if np.linalg.matrix_rank(A) < min(n, m):
+                continue
 
-        # ensure A is full rank, else try generating again
-        if np.linalg.matrix_rank(A) < min(n, m):
-            return self.genLP()
+            # generate b from Ax
+            b = np.matmul(A,x)
 
-        # apply degeneracy
-
-        # generate b from Ax
-        b = np.matmul(A,x)
-
-        return c, A, b
+            return c, A, b
 
     
     def genBoundedLP(self):
@@ -87,5 +85,10 @@ class RandomGenerator:
 
     def applySparsity(self, n):
         p = random.uniform(0,1)
-        return n if p <= self.sparsity else 0.0 
+        return 0.0 if p <= self.sparsity else n 
 
+    def checkSparsity(self, A):
+        zeroes = (A.shape[0] - np.count_nonzero(A, axis=0)).sum()
+        s = float(zeroes)/(A.shape[0] * A.shape[1])
+        print(s)
+        

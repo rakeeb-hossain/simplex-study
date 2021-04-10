@@ -1,10 +1,21 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import random
+import time
+import timeit
+
+def timer(fxn):
+    def timed_fxn(self, *arg, **kw):
+        start = timeit.default_timer()
+        fxn(self, *arg, **kw)
+        elapsed = timeit.default_timer() - start
+        self.elapsed  = self.elapsed + elapsed
+    
+    return timed_fxn
 
 class PivotRule(ABC):
     def __init__(self):
-        self.time = 0
+        self.elapsed = 0
     
     @abstractmethod
     def computePivotIndex(self, reduced_costs):
