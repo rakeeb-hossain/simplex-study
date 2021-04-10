@@ -12,12 +12,19 @@ Main method for calling SimplexSolver class
 
 if __name__ == "__main__":
     solver = SimplexSolver()
-    gen = RandomGenerator([25,100], [25,100], -100, 100, sparsity=0.2)    
+    gen = RandomGenerator([25,100], [25,100], -100, 100, sparsity=0.90)    
+    test_num = 1
 
-    # Solve
-    c, A, b = gen.genLP()
+    for i in range(0, test_num):
+        # Generate LP
+        c, A, b = gen.genLP()
 
-    print("LP generated!")
-    x = solver.solve(c, A, b, pv.DantzigsRule())
+        # Run solves
+        _ = solver.solve(c, A, b, pv.DantzigsRule())
+        print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
 
-    print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+        _ = solver.solve(c, A, b, pv.BlandsRule())
+        print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+
+        _ = solver.solve(c, A, b, pv.RandomRule())
+        print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)

@@ -40,7 +40,7 @@ class RandomRule(PivotRule):
         negative_indices = []
 
         for j in reduced_costs.keys():
-            if reduces_costs[j] < 0.0:
+            if reduced_costs[j] < 0.0:
                 negative_indices.append(j)            
 
         return random.choice(negative_indices)

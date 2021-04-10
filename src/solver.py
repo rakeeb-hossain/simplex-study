@@ -13,6 +13,9 @@ class SimplexSolver:
     """ This class implements simplex algorithm to solve LPs """
 
     def __init__(self):
+        self.print_freq = 100
+        self.is_degen = False
+
         # Solver statistics
         self.pivot_time = 0
         self.num_pivots = 0
@@ -59,20 +62,22 @@ class SimplexSolver:
         opt_infinity = False
         iteration_number = 0
         obj_val = float('inf')
-        print("\n\n\n")
 
         # main simplex body
         while not optimal:
             # print iteration number
-            print('simplex: starting iteration #{}, obj = {}'.format(
+            if iteration_number % self.print_freq == 0:
+                print('simplex: starting iteration #{}, obj = {}'.format(
                 iteration_number, obj_val))
             iteration_number += 1
 
             # compute x_b, c_b, B_inv
             B_inv = np.linalg.inv(B)
             x_b = np.dot(B_inv, self.b)
-            if (x_b == 0.0).any():
+            if not self.is_degen and (x_b == 0.0).any():
                 print('simplex: alert! this bfs is degenerate')
+                self.is_degen = True
+
             c_b = self.c[basic_indices]
 
             """
@@ -192,15 +197,17 @@ class SimplexSolver:
         while not optimal:
 
             # print iteration number
-            print('get_init_bfs_aux: starting iteration #{}, obj = {}'.format(
+            if iteration_number % self.print_freq == 0:
+                print('get_init_bfs_aux: starting iteration #{}, obj = {}'.format(
                 iteration_number, obj_val))
             iteration_number += 1
 
             # compute x_b, c_b, B_inv
             B_inv = np.linalg.inv(B)
             x_b = np.dot(B_inv, b)
-            if (x_b == 0.0).any():
-                print('get_init_bfs_aux: alert! this bfs is degenerate')
+            if not self.is_degen and (x_b == 0.0).any():
+                print('simplex: alert! this bfs is degenerate')
+                self.is_degen = True
             c_b = c[basic_indices]
 
             # compute obj_val just for display purposes
