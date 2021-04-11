@@ -136,6 +136,12 @@ class SimplexSolver:
                         theta_star = -x_b[i]/d_b[i]
 
             # form new solution by replacing basic_indices[l] with chosen_j
+            #choose first index
+            for i, basic_index in enumerate(basic_indices):
+                if (-x_b[i]/d_b[i] == theta_star):
+                    l = i
+                    break
+
             basic_indices[l] = chosen_j
             basic_indices.sort()
             B = self.A[:, list(basic_indices)]
@@ -260,6 +266,12 @@ class SimplexSolver:
                     if -x_b[i]/d_b[i] < -x_b[l]/d_b[l]:
                         l = i
                         theta_star = -x_b[i]/d_b[i]
+
+            for i, basic_index in enumerate(basic_indices):
+                if (-x_b[i]/d_b[i] == theta_star):
+                    l = i
+                    break
+                    
 
             # form new solution by replacing basic_indices[l] with chosen_j
             basic_indices[l] = chosen_j
