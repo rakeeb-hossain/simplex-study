@@ -12,9 +12,10 @@ import timeit
 class SimplexSolver:
     """ This class implements simplex algorithm to solve LPs """
 
-    def __init__(self):
+    def __init__(self, is_degen=False, debug=False):
         self.print_freq = 100
-        self.is_degen = False
+        self.is_degen = is_degen
+        self.debug = debug
 
         # Solver statistics
         self.pivot_time = 0
@@ -56,6 +57,8 @@ class SimplexSolver:
         init_bfs = self.get_initial_bfs()
         if init_bfs is None:
             return -1
+        if init_bfs == -2:
+            raise ValueError('Mismatch')
         (_, basic_indices) = init_bfs
         B = self.A[:, list(basic_indices)]
         optimal = False
@@ -66,7 +69,7 @@ class SimplexSolver:
         # main simplex body
         while not optimal:
             # print iteration number
-            if iteration_number % self.print_freq == 0:
+            if self.debug and iteration_number % self.print_freq == 0:
                 print('simplex: starting iteration #{}, obj = {}'.format(
                 iteration_number, obj_val))
             iteration_number += 1
@@ -74,9 +77,8 @@ class SimplexSolver:
             # compute x_b, c_b, B_inv
             B_inv = np.linalg.inv(B)
             x_b = np.dot(B_inv, self.b)
-            if not self.is_degen and (x_b == 0.0).any():
-                print('simplex: alert! this bfs is degenerate')
-                self.is_degen = True
+            if self.is_degen ^ (x_b == 0.0).any():
+                raise ValueError("Degen not matched")
 
             c_b = self.c[basic_indices]
 
@@ -104,7 +106,8 @@ class SimplexSolver:
             if (np.array(list(reduced_costs.values())) >= 0.0).all():
                 # all reduced costs are >= 0.0 so this means we are at optimal already
                 optimal = True
-                print("Already optimal!")
+                if self.debug:
+                    print("Already optimal!")
                 break
 
             # this solution is not optimal, go to a better neighbouring BFS by calling pivot rule
@@ -137,11 +140,11 @@ class SimplexSolver:
             basic_indices.sort()
             B = self.A[:, list(basic_indices)]
 
-        if opt_infinity:
+        if self.debug and opt_infinity:
             print('Optimal is inifinity')
             return -1
 
-        if not optimal:
+        if self.debug and not optimal:
             print('optimal not found')
             return -1
 
@@ -197,17 +200,21 @@ class SimplexSolver:
         while not optimal:
 
             # print iteration number
-            if iteration_number % self.print_freq == 0:
+            if self.debug and iteration_number % self.print_freq == 0:
                 print('get_init_bfs_aux: starting iteration #{}, obj = {}'.format(
                 iteration_number, obj_val))
             iteration_number += 1
 
             # compute x_b, c_b, B_inv
-            B_inv = np.linalg.inv(B)
+            B_inv = np.eye(B.shape[0])
+            try:
+                B_inv = np.linalg.inv(B)
+            except:
+                return -2
+
             x_b = np.dot(B_inv, b)
-            if not self.is_degen and (x_b == 0.0).any():
-                print('simplex: alert! this bfs is degenerate')
-                self.is_degen = True
+            if self.is_degen ^ (x_b == 0.0).any():
+                raise ValueError("Degen not matched")
             c_b = c[basic_indices]
 
             # compute obj_val just for display purposes
@@ -260,7 +267,8 @@ class SimplexSolver:
             B = A_[:, list(basic_indices)]
 
         if obj_val != 0.0:
-            print('get_init_bfs_aux: the original problem is infeasible!')
+            if self.debug:
+                print('get_init_bfs_aux: the original problem is infeasible!')
             return None
 
         # if basic_indices contains no artifical variables, return that
@@ -278,7 +286,8 @@ class SimplexSolver:
             x_b = np.dot(np.linalg.inv(B), b)
             assert (x_b >= 0.0).all(
             ), 'this does not give a feasible solution, something is wrong, assertion failed'
-            print('init_bfs_aux: assertions passed, no artificial vars in basis by chance! found a valid init bfs in {} iterations'.format(
+            if self.debug:
+                print('init_bfs_aux: assertions passed, no artificial vars in basis by chance! found a valid init bfs in {} iterations'.format(
                 iteration_number))
             basic_indices.sort()
 
@@ -316,7 +325,8 @@ class SimplexSolver:
         x_b = np.dot(np.linalg.inv(B), b)
         assert (x_b >= 0.0).all(
         ), 'this does not give a feasible solution, something is wrong, assertion failed'
-        print('init_bfs_aux: assertions passed! found a valid init bfs in {} iterations'.format(
+        if self.debug:
+            print('init_bfs_aux: assertions passed! found a valid init bfs in {} iterations'.format(
             iteration_number))
 
         return (B, basic_indices)

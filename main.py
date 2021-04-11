@@ -11,20 +11,30 @@ Main method for calling SimplexSolver class
 """
 
 if __name__ == "__main__":
-    solver = SimplexSolver()
+    solver = SimplexSolver(is_degen=False)
     gen = RandomGenerator([25,100], [25,100], -100, 100, sparsity=0.90)    
     test_num = 1
 
-    for i in range(0, test_num):
+    ctr = 0
+    while ctr < test_num:
         # Generate LP
         c, A, b = gen.genLP()
 
         # Run solves
-        _ = solver.solve(c, A, b, pv.DantzigsRule())
-        print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+        try:
+            _ = solver.solve(c, A, b, pv.SteepestEdge(A))
+            print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
 
-        _ = solver.solve(c, A, b, pv.BlandsRule())
-        print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+            _ = solver.solve(c, A, b, pv.DantzigsRule(A))
+            print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
 
-        _ = solver.solve(c, A, b, pv.RandomRule())
-        print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+            _ = solver.solve(c, A, b, pv.BlandsRule(A))
+            print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+
+            _ = solver.solve(c, A, b, pv.RandomRule(A))
+            print("\33[32m{}, {}\033[0m".format(solver.num_pivots, solver.pivot_time), file=sys.stderr)
+        except:
+            print("ERROR")
+            ctr = ctr - 1
+
+        ctr = ctr + 1

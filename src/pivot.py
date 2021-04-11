@@ -15,8 +15,9 @@ def timer(fxn):
     return timed_fxn
 
 class PivotRule(ABC):
-    def __init__(self):
+    def __init__(self, A):
         self.elapsed = 0
+        self.A = A
     
     @abstractmethod
     def computePivotIndex(self, reduced_costs):
@@ -47,12 +48,12 @@ class RandomRule(PivotRule):
         return random.choice(negative_indices)
 
 class SteepestEdge(PivotRule):
-    def computePivotIndex(self, reduced_costs, A):
+    def computePivotIndex(self, reduced_costs):
         chosen_j = 0
         chosen_steepness = 0
         for j in reduced_costs.keys():
             if reduced_costs[j] < 0.0:
-                colj = A[:j]
+                colj = self.A[:j]
                 column_squared = np.array([x**2 for x in colj])
                 accum = np.sum(column_squared)
                 denom = math.sqrt(1 + accum)
@@ -61,7 +62,5 @@ class SteepestEdge(PivotRule):
                     chosen_steepness = steepness
                     chosen_j = j
         return chosen_j
-
-
 
 
