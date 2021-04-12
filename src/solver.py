@@ -16,6 +16,7 @@ class SimplexSolver:
         self.print_freq = 100
         self.is_degen = is_degen
         self.debug = debug
+        self.max_iter = 2000
 
         # Solver statistics
         self.pivot_time = 0
@@ -57,6 +58,8 @@ class SimplexSolver:
         init_bfs = self.get_initial_bfs()
         if init_bfs is None:
             return -1
+        if init_bfs == -1:
+            return -1
         if init_bfs == -2:
             raise ValueError('Mismatch')
         (_, basic_indices) = init_bfs
@@ -66,19 +69,29 @@ class SimplexSolver:
         iteration_number = 0
         obj_val = float('inf')
 
+        seen_vals = set()
+
+        # Set A in pivot_rule class
+        self.pivot_rule.A = A
+        self.pivot_rule.B = B
+        
         # main simplex body
         while not optimal:
             # print iteration number
             if self.debug and iteration_number % self.print_freq == 0:
                 print('simplex: starting iteration #{}, obj = {}'.format(
                 iteration_number, obj_val))
+
+            if iteration_number == self.max_iter:
+                return -1
+
             iteration_number += 1
 
             # compute x_b, c_b, B_inv
             B_inv = np.linalg.inv(B)
             x_b = np.dot(B_inv, self.b)
-            if self.is_degen ^ (x_b == 0.0).any():
-                raise ValueError("Degen not matched")
+            #if self.is_degen ^ (x_b == 0.0).any():
+            #    raise ValueError("Degen not matched")
 
             c_b = self.c[basic_indices]
 
@@ -92,6 +105,11 @@ class SimplexSolver:
             obj_val = 0.0
             for i, b_i in enumerate(basic_indices):
                 obj_val += (c[b_i] * x_b[i])
+
+            #if obj_val[0] in seen_vals: # ensure no infin loops
+            #    raise ValueError('Loop detected')
+
+            seen_vals.add(obj_val[0])
 
             # compute reduced cost in each non-basic j-th direction
             reduced_costs = {}
@@ -138,13 +156,14 @@ class SimplexSolver:
             # form new solution by replacing basic_indices[l] with chosen_j
             #choose first index
             for i, basic_index in enumerate(basic_indices):
-                if (-x_b[i]/d_b[i] == theta_star):
+                if d_b[i] < 0 and (-x_b[i]/d_b[i] == theta_star):
                     l = i
                     break
 
             basic_indices[l] = chosen_j
             basic_indices.sort()
             B = self.A[:, list(basic_indices)]
+            self.pivot_rule.B = B
 
         if self.debug and opt_infinity:
             print('Optimal is inifinity')
@@ -201,6 +220,14 @@ class SimplexSolver:
         opt_infinity = False
         iteration_number = 0
         obj_val = float('inf')
+        
+        seen_vals = set()
+
+        # Set A_ in pivot_rule class
+        self.pivot_rule.A = A_
+        self.pivot_rule.B = B
+
+        found_degen = False
 
         # main simplex body
         while not optimal:
@@ -209,6 +236,10 @@ class SimplexSolver:
             if self.debug and iteration_number % self.print_freq == 0:
                 print('get_init_bfs_aux: starting iteration #{}, obj = {}'.format(
                 iteration_number, obj_val))
+                
+            if iteration_number == self.max_iter:
+                return -1
+
             iteration_number += 1
 
             # compute x_b, c_b, B_inv
@@ -219,14 +250,23 @@ class SimplexSolver:
                 return -2
 
             x_b = np.dot(B_inv, b)
-            if self.is_degen ^ (x_b == 0.0).any():
-                raise ValueError("Degen not matched")
+
+            if not self.is_degen and (x_b == 0.0).any():
+                raise ValueError("Is degen")
+            if self.is_degen and (x_b == 0.0).any():
+                found_degen = True
+
             c_b = c[basic_indices]
 
             # compute obj_val just for display purposes
             obj_val = 0.0
             for i, b_i in enumerate(basic_indices):
                 obj_val += (c[b_i] * x_b[i])
+
+            #if obj_val[0] in seen_vals: # ensure no infin loops
+            #    raise ValueError('Loop detected')
+
+            seen_vals.add(obj_val[0])
 
             # compute reduced cost in each non-basic j-th direction
             reduced_costs = {}
@@ -266,17 +306,22 @@ class SimplexSolver:
                     if -x_b[i]/d_b[i] < -x_b[l]/d_b[l]:
                         l = i
                         theta_star = -x_b[i]/d_b[i]
-
+            
+            """
             for i, basic_index in enumerate(basic_indices):
-                if (-x_b[i]/d_b[i] == theta_star):
+                if d_b[i] < 0 and (-x_b[i]/d_b[i] == theta_star):
                     l = i
                     break
-                    
+            """     
 
             # form new solution by replacing basic_indices[l] with chosen_j
             basic_indices[l] = chosen_j
             basic_indices.sort()
             B = A_[:, list(basic_indices)]
+            self.pivot_rule.B = B
+
+        if self.is_degen and not found_degen:
+            raise ValueError("Not degen")
 
         if obj_val != 0.0:
             if self.debug:

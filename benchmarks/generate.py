@@ -33,6 +33,8 @@ class RandomGenerator:
         self.sparsity = sparsity
         self.degenerate = degenerate
 
+        np.random.seed(None)
+
     def genLP(self):
         """
         Returns feasible LP matrices c, A, b
@@ -40,8 +42,8 @@ class RandomGenerator:
         """
         while True:
             # Select an n and m
-            n = random.randint(self.n_range[0], self.n_range[1])
-            m = random.randint(self.m_range[0], self.m_range[1])
+            n = np.random.randint(self.n_range[0], self.n_range[1])
+            m = np.random.randint(self.m_range[0], self.m_range[1])
 
             # Generate matrices in range [self.min, self.max]
             A = np.random.rand(n, m) * (self.max_val - self.min_val) +  self.min_val
@@ -62,7 +64,7 @@ class RandomGenerator:
             return c, A, b
 
     
-    def genBoundedLP(self):
+    def genUnboundedLP(self):
         # Select an n and m
         n = random.randint(self.n_range[0], self.n_range[1])
         m = random.randint(self.m_range[0], self.m_range[1])
@@ -84,7 +86,7 @@ class RandomGenerator:
         #
 
     def applySparsity(self, n):
-        p = random.uniform(0,1)
+        p = np.random.uniform(0,1)
         return 0.0 if p <= self.sparsity else n 
 
     def checkSparsity(self, A):
